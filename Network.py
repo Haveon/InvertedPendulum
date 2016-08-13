@@ -36,15 +36,11 @@ def d_out_act(z): return z*(1.0 - z)
 
 #--------------------------------------------------------------------------------------------------
 class Network:
-	def __init__(self, input_vectors, labels, N_inputs=2, N_hidden=10, N_outputs=1):
+	def __init__(self, N_inputs=2, N_hidden=10, N_outputs=1):
 		#Initialize the neural network. Note: "N" stands for "Number of _".
 		self.N_in = N_inputs + 1 #Includes a bias weight vector.
 		self.N_hid = N_hidden
 		self.N_out = N_outputs
-
-		#Include the training data:
-		self.vectors = input_vectors
-		self.labels = labels
 
 		#Initialize the weights with random values.
 		self.weightsIn = np.random.rand(self.N_in, self.N_hid)
@@ -62,7 +58,7 @@ class Network:
 		#Load inputs into the input activations, being careful to keep the bias input node's activation at zero.
 		for i in np.arange(len(inputs)):
 			self.acts_in[i] = inputs[i]
-		
+
 		#Calculate the hidden node activations and then the output activations using numpy matrix multiplication:
 		self.acts_hid = hid_act(np.dot(np.transpose(self.weightsIn), self.acts_in))
 		self.acts_out = out_act(np.dot(np.transpose(self.weightsOut), self.acts_hid))
@@ -76,7 +72,7 @@ class Network:
 		#Calculate the deltas:
 		output_deltas = (targets - self.acts_out) * d_out_act(self.acts_out)
 		hidden_deltas = d_hid_act(self.acts_hid) * np.dot(self.weightsOut, output_deltas)
-		
+
 		#Update the output weights:
 		shift = np.outer(self.acts_hid, output_deltas)
 		self.weightsOut += learningrate * shift
@@ -90,7 +86,7 @@ class Network:
 		#Run through the points in a grid and classify the points. The classifications given for each
 		#(X,Y) coordinate in the grid can then be used to create a contour of the network output for
 		#inputs over the range [-8,8].
-		x = y = np.linspace(-8,8,50)
+		x = y = np.linspace(-8,8,100)
 		Z = np.zeros([len(x), len(y)])
 
 		for i in range(len(x)):
@@ -102,14 +98,14 @@ class Network:
 		return X, Y, Z
 
 
-	def Learn(self, iterations, learningrate=0.5):
+	def Learn(self, input_vectors, labels, iterations, learningrate=0.5):
 		#Iterate through all of the training data "iterations" number of times. After each point
 		#is classified, the output is used for backpropagation to update the weights of the network.
 
 		for i in np.arange(iterations):
-			for pos in np.arange(len(self.labels)): #pos is the index of the training data point being classified.
-				self.Classify(self.vectors[:,pos])
-				self.Backprop(self.labels[pos],learningrate)
+			for pos in np.arange(len(labels)): #pos is the index of the training data point being classified.
+				self.Classify(input_vectors[:,pos])
+				self.Backprop(labels[pos],learningrate)
 
 
 #--------------------------------------------------------------------------------------------------
@@ -120,7 +116,7 @@ labels = training_data['labels'] #Training labels
 zeros, ones = SortPoints(input_vectors, labels) #Point positions for the ones or zeros (for plotting).
 
 #Create the network:
-network = Network(input_vectors, labels) #Creating the network requires training data to be input!
+network = Network() #Creating the network requires training data to be input!
 
 #--------------------------------------------------------------------------------------------------
 #Contour plot before training the network:
@@ -140,7 +136,7 @@ mpl.savefig('A1Q3 - Before Training')
 
 #--------------------------------------------------------------------------------------------------
 #Train the network all the things:
-network.Learn(1000)
+network.Learn(input_vectors, labels, 20)
 
 #--------------------------------------------------------------------------------------------------
 #After training contour plot:
