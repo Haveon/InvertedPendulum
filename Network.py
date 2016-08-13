@@ -39,16 +39,19 @@ class Network:
 	def __init__(self, N_inputs=2, N_hidden=10, N_outputs=1):
 		#Initialize the neural network. Note: "N" stands for "Number of _".
 		self.N_in = N_inputs + 1 #Includes a bias weight vector.
-		self.N_hid = N_hidden
+		self.N_hid_1 = N_hidden
+		self.N_hid_2 = N_hidden
 		self.N_out = N_outputs
 
 		#Initialize the weights with random values.
-		self.weightsIn = np.random.rand(self.N_in, self.N_hid)
-		self.weightsOut = np.random.rand(self.N_hid, self.N_out)
+		self.weightsIn = np.random.rand(self.N_in, self.N_hid_1)
+		self.weightsMiddle = np.random.rand(self.N_hid_1, self.N_hid_2)
+		self.weightsOut = np.random.rand(self.N_hid_2, self.N_out)
 
 		#"acts" = "activations", "in" = "inputs", "hid" = "hidden", "out" = "outputs"
 		self.acts_in = np.zeros(self.N_in) + 1
-		self.acts_hid = np.zeros(self.N_hid) + 1
+		self.acts_hid_1 = np.zeros(self.N_hid_1) + 1
+		self.acts_hid_2 = np.zeros(self.N_hid_2) + 1
 		self.acts_out = np.zeros(self.N_out) + 1
 
 
@@ -60,8 +63,9 @@ class Network:
 			self.acts_in[i] = inputs[i]
 
 		#Calculate the hidden node activations and then the output activations using numpy matrix multiplication:
-		self.acts_hid = hid_act(np.dot(np.transpose(self.weightsIn), self.acts_in))
-		self.acts_out = out_act(np.dot(np.transpose(self.weightsOut), self.acts_hid))
+		self.acts_hid_1 = hid_act(np.dot(np.transpose(self.weightsIn), self.acts_in))
+		self.acts_hid_2 = hid_act(np.dot(np.transpose(self.weightsMiddle), self.acts_hid_1))
+		self.acts_out = out_act(np.dot(np.transpose(self.weightsOut), self.acts_hid_2))
 
 		return self.acts_out #Output of network
 
@@ -71,14 +75,19 @@ class Network:
 
 		#Calculate the deltas:
 		output_deltas = (targets - self.acts_out) * d_out_act(self.acts_out)
-		hidden_deltas = d_hid_act(self.acts_hid) * np.dot(self.weightsOut, output_deltas)
+		hidden_deltas_2 = d_hid_act(self.acts_hid_2) * np.dot(self.weightsOut, output_deltas)
+		hidden_deltas_1 = d_hid_act(self.acts_hid_1) * np.dot(self.weightsMiddle, hidden_deltas_2)
 
 		#Update the output weights:
-		shift = np.outer(self.acts_hid, output_deltas)
+		shift = np.outer(self.acts_hid_2, output_deltas)
 		self.weightsOut += learningrate * shift
 
+		#Update the middle weights:
+		shift = np.outer(self.acts_hid_1, hidden_deltas_2)
+		self.weightsMiddle += learningrate * shift
+
 		#Update the input weights:
-		shift = np.outer(self.acts_in, hidden_deltas)
+		shift = np.outer(self.acts_in, hidden_deltas_1)
 		self.weightsIn += learningrate * shift
 
 
@@ -136,7 +145,7 @@ mpl.savefig('A1Q3 - Before Training')
 
 #--------------------------------------------------------------------------------------------------
 #Train the network all the things:
-network.Learn(input_vectors, labels, 20)
+network.Learn(input_vectors, labels, 50)
 
 #--------------------------------------------------------------------------------------------------
 #After training contour plot:
