@@ -5,34 +5,16 @@
 #Andrew Reeves - 20459205
 #--------------------------------------------------------------------------------------------------
 
-import pickle
 import numpy as np
-import matplotlib.pyplot as mpl
-
-#--------------------------------------------------------------------------------------------------
-def SortPoints(input_vectors, labels):
-	#Sort the points, whether they are labelled '1' or '0':
-	ones = [[],[]]   #Stores [[x's],[y's]] vectors with label=1
-	zeros = [[],[]]  #Stores [[x's],[y's]] vectors with label=0
-
-	for j in np.arange(len(labels)):
-		if labels[j] == 1:
-			ones[0].append(input_vectors[0][j])
-			ones[1].append(input_vectors[1][j])
-		else:
-			zeros[0].append(input_vectors[0][j])
-			zeros[1].append(input_vectors[1][j])
-
-	return zeros, ones
 
 #--------------------------------------------------------------------------------------------------
 #Activation functions:
 def hid_act(a): return np.tanh(a)
-def out_act(a): return (1.0/(1.0 + np.exp(-a)))
+def out_act(a): return a #(1.0/(1.0 + np.exp(-a)))
 
 #Derivatives of the activation functions:
 def d_hid_act(z): return (1.0 - z**2)
-def d_out_act(z): return z*(1.0 - z)
+def d_out_act(z): return np.ones(z.shape) #z*(1.0 - z)
 
 #--------------------------------------------------------------------------------------------------
 class Network:
@@ -91,75 +73,14 @@ class Network:
 		self.weightsIn += learningrate * shift
 
 
-	def Contour(self):
-		#Run through the points in a grid and classify the points. The classifications given for each
-		#(X,Y) coordinate in the grid can then be used to create a contour of the network output for
-		#inputs over the range [-8,8].
-		x = y = np.linspace(-8,8,100)
-		Z = np.zeros([len(x), len(y)])
-
-		for i in range(len(x)):
-		    for j in range(len(y)):
-		        Z[i][j] = float(self.Classify([x[i], y[j]])[0])>0.50
-
-		X, Y = np.meshgrid(x,y)
-
-		return X, Y, Z
-
-
-	def Learn(self, input_vectors, labels, iterations, learningrate=0.5):
+	def Learn(self, input_vectors, labels, iterations, learningrate=0.01):
 		#Iterate through all of the training data "iterations" number of times. After each point
 		#is classified, the output is used for backpropagation to update the weights of the network.
 
+		#TODO: Add batches (batch-training)
+
 		for i in np.arange(iterations):
+			print i
 			for pos in np.arange(len(labels)): #pos is the index of the training data point being classified.
-				self.Classify(input_vectors[:,pos])
-				self.Backprop(labels[pos],learningrate)
-
-
-#--------------------------------------------------------------------------------------------------
-#Load the data from the pickle file and get it ready to rock-and-roll:
-training_data = pickle.load(open('backprop-data.pkl','rb'))
-input_vectors = training_data['vectors'] #Training inputs
-labels = training_data['labels'] #Training labels
-zeros, ones = SortPoints(input_vectors, labels) #Point positions for the ones or zeros (for plotting).
-
-#Create the network:
-network = Network() #Creating the network requires training data to be input!
-
-#--------------------------------------------------------------------------------------------------
-#Contour plot before training the network:
-mpl.figure(1)
-X, Y, Z = network.Contour()
-mpl.contourf(X,Y,Z, levels=[0.0,1.0], extend='both')
-mpl.plot(zeros[0], zeros[1], 'o', label='0')
-mpl.plot(ones[0], ones[1], 'o', label='1')
-
-mpl.xlim(-8,8)
-mpl.ylim(-8,8)
-mpl.xlabel('x')
-mpl.ylabel('y')
-mpl.legend()
-mpl.title('Question 3: Before Training')
-mpl.savefig('A1Q3 - Before Training')
-
-#--------------------------------------------------------------------------------------------------
-#Train the network all the things:
-network.Learn(input_vectors, labels, 50)
-
-#--------------------------------------------------------------------------------------------------
-#After training contour plot:
-mpl.figure(2)
-X, Y, Z = network.Contour()
-mpl.contourf(X,Y,Z, levels=[0.0,1.0], extend='both')
-mpl.plot(zeros[0], zeros[1], 'o', label='0')
-mpl.plot(ones[0], ones[1], 'o', label='1')
-
-mpl.xlim(-8,8)
-mpl.ylim(-8,8)
-mpl.xlabel('x')
-mpl.ylabel('y')
-mpl.legend()
-mpl.title('Question 3: After Training')
-mpl.savefig('A1Q3 - After Training')
-mpl.show()
+				self.Classify(input_vectors[pos])
+				self.Backprop(labels[pos], learningrate)
