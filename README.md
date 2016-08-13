@@ -15,4 +15,4 @@ it will output a control signal.
 
 The main idea of the paper is to emulate k evolutions of the system, and then
 backprop the error to train the controller. The emulated pendulum will be trained
-using euler steps.
+using verlet steps.
