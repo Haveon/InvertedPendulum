@@ -14,7 +14,7 @@ def verletStep(f, theta_last, theta_now, control, t, dt):
     Take a single verlet step for the given function.
     This is coded for this problem specifically... not general.
     """
-    return (2*theta_now - theta_last + (f(theta_now,t)+control)*dt**2)%(2*np.pi)
+    return 2*theta_now - theta_last + (f(theta_now,t)+control)*dt**2
 
 def generateInputs(numInputs, dt=0.001, f=systemDE):
     """
@@ -34,6 +34,11 @@ def generateInputs(numInputs, dt=0.001, f=systemDE):
 
     return np.concatenate([thetas,forward_thetas,control], axis=1)
 
+def meanUniformDistribution(minimum, maximum):
+    return (maximum+minimum)/2.
+
+def stdUniformDistribution(minimum, maximum):
+    return (maximum - minimum)/(2*np.sqrt(3))
 
 def normalizeInputs(inputs):
     """
@@ -52,3 +57,33 @@ def normalizeInputs(inputs):
         inputs[:,i] = (data-mean)/std
         settings.append((mean,std))
     return inputs, settings
+
+def generateOutputs(inputs, dt=0.001, f=systemDE):
+    """
+    Given a set of inputs it computes the outputs we expect to get out of the
+    neural net using the verletStep function.
+    Returns the un-normalized outputs.
+    """
+    theta_last = inputs[:,0]
+    theta_now  = inputs[:,1]
+    control    = inputs[:,2]
+    outputs    = verletStep(f, theta_last, theta_now, control, None, dt)%(2*np.pi)
+    return outputs
+
+if __name__ == '__main__':
+    inputs = generateInputs(1e6)
+    outputs= generateOutputs(inputs)
+
+    meanTheta = meanUniformDistribution(0, 2*np.pi)
+    meanControl= meanUniformDistribution(-1, 1)
+    means = np.array([meanTheta,meanTheta,meanControl])
+
+    stdTheta = stdUniformDistribution(0, 2*np.pi)
+    stdControl = stdUniformDistribution(0, 2*np.pi)
+    stds = np.array([stdTheta,stdTheta,stdControl])
+
+    normedInputs = (inputs - means)/stds
+    normedOutputs = (outputs - meanTheta)/stdTheta
+
+    net = Network(3,10,1)
+    net.Learn(normedInputs, normedOutputs, 1000, learningrate=0.01)
