@@ -36,6 +36,8 @@ class Network:
 		self.acts_hid_2 = np.zeros(self.N_hid_2) + 1
 		self.acts_out = np.zeros(self.N_out) + 1
 
+		#Keep the deltas that were back-propagated to the input of the network
+		self.input_deltas = np.zeros(self.N_in)
 
 	def Classify(self, inputs):
 		#Given an input, what does the network output?
@@ -59,6 +61,7 @@ class Network:
 		output_deltas = (targets - self.acts_out) * d_out_act(self.acts_out)
 		hidden_deltas_2 = d_hid_act(self.acts_hid_2) * np.dot(self.weightsOut, output_deltas)
 		hidden_deltas_1 = d_hid_act(self.acts_hid_1) * np.dot(self.weightsMiddle, hidden_deltas_2)
+		self.input_deltas = np.dot(self.weightsIn, hidden_deltas_1)
 
 		#Update the output weights:
 		shift = np.outer(self.acts_hid_2, output_deltas)
