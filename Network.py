@@ -7,6 +7,10 @@
 
 import numpy as np
 
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return izip_longest(*args, fillvalue=fillvalue)
+
 #--------------------------------------------------------------------------------------------------
 #Activation functions:
 def hid_act(a): return np.tanh(a)
@@ -38,6 +42,7 @@ class Network:
 
 		#Keep the deltas that were back-propagated to the input of the network
 		self.input_deltas = np.zeros(self.N_in)
+		self.output_deltas = np.zeros(self.N_in)
 
 	def Classify(self, inputs):
 		#Given an input, what does the network output?
@@ -53,14 +58,15 @@ class Network:
 
 		return self.acts_out #Output of network
 
-
-	def Backprop(self, targets, learningrate):
+	def Backprop(self, output_deltas, learningrate):
 		#Use backpropagation to update the weight values.
 
 		#Calculate the deltas:
-		output_deltas = (targets - self.acts_out) * d_out_act(self.acts_out)
 		hidden_deltas_2 = d_hid_act(self.acts_hid_2) * np.dot(self.weightsOut, output_deltas)
 		hidden_deltas_1 = d_hid_act(self.acts_hid_1) * np.dot(self.weightsMiddle, hidden_deltas_2)
+
+		#Store output and input deltas for use if desired:
+		self.output_deltas = output_deltas
 		self.input_deltas = np.dot(self.weightsIn, hidden_deltas_1)
 
 		#Update the output weights:
@@ -75,15 +81,42 @@ class Network:
 		shift = np.outer(self.acts_in, hidden_deltas_1)
 		self.weightsIn += learningrate * shift
 
+	def getOutputDeltas(self, expected_output_labels):
+		"""Calculates the output deltas to be used in the backpropagation function."""
+		output_deltas = (expected_output_labels - self.acts_out) * d_out_act(self.acts_out)
+		return output_deltas
 
 	def Learn(self, input_vectors, labels, iterations, learningrate=0.01):
 		#Iterate through all of the training data "iterations" number of times. After each point
 		#is classified, the output is used for backpropagation to update the weights of the network.
 
-		#TODO: Add batches (batch-training)
-
 		for i in np.arange(iterations):
+			# i = iteration
 			print i
 			for pos in np.arange(len(labels)): #pos is the index of the training data point being classified.
 				self.Classify(input_vectors[pos])
-				self.Backprop(labels[pos], learningrate)
+				output_deltas = self.getOutputDeltas(labels[pos])
+				self.Backprop(output_deltas, learningrate)
+
+	def batchLearn(self, input_vectors, labels, iterations, learningrate=0.01, batch_size=5):
+		#Iterate through all of the training data "iterations" number of times in chunks.
+		#Each chunk (batch) is of length batch_size. After each batch is run, the average
+		#error for those classifications is then backpropagated through the network.
+
+		for i in np.arange(iterations):
+			# i = iteration
+			print i
+
+			#For a given "iteration", loop through the training set one batch at a time:
+			for j in np.arange(0, len(labels), batch_size):
+				#one batch worth of training data
+				tmp_output_deltas = 0.
+
+				for pos in np.arange(j, j+batch_size, batch_size): #pos is the index of the training data point being classified.
+					self.Classify(input_vectors[pos])
+					tmp_output_deltas += self.getOutputDeltas(labels[pos])
+
+				batch_output_deltas = tmp_output_deltas / batch_size #average
+
+				#Backprop the error after the batch has been run:
+				self.Backprop(batch_output_deltas, learningrate)
