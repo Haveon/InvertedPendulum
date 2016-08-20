@@ -12,6 +12,10 @@ labels = 4.*np.sin(2.*input_vector)+0.5
 network.Learn(input_vector, labels, 100)
 t = np.linspace(-3.14,3.14)
 tmps = [network.Classify([t[_]]) for _ in range(50)]
+
+print """ "Input" error deltas backpropagated through the whole network:  """
+print network.input_deltas
+
 mpl.figure(0)
 mpl.plot(input_vector, labels, 'o')
 mpl.plot(t,tmps,'r')
