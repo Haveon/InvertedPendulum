@@ -19,4 +19,3 @@ using verlet steps.
 
 ## TODO
 * regularization
-* batch learning
