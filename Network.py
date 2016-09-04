@@ -11,6 +11,17 @@ def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return izip_longest(*args, fillvalue=fillvalue)
 
+def shuffle_in_unison(a, b):
+    """Takes in arrays a and b and shuffles them such that they are both in
+    the same random order."""
+    rng_state = np.random.get_state()
+    np.random.shuffle(a)
+    np.random.set_state(rng_state)
+    np.random.shuffle(b)
+
+    return a, b
+
+
 #--------------------------------------------------------------------------------------------------
 #Activation functions:
 def hid_act(a): return np.tanh(a)
@@ -107,10 +118,15 @@ class Network:
 			# i = iteration
 			print i
 
+			#randomize the ordering of the training data
+			input_vectors, labels = shuffle_in_unison(input_vectors, labels)
+
 			#For a given "iteration", loop through the training set one batch at a time:
 			for j in np.arange(0, len(labels), batch_size):
 				#one batch worth of training data
-				tmp_output_deltas = 0.
+
+				tmp_output_deltas = 0. #This will be an array
+				#print "shape", tmp_output_deltas.shape
 
 				for pos in np.arange(j, j+batch_size, batch_size): #pos is the index of the training data point being classified.
 					self.Classify(input_vectors[pos])
@@ -120,3 +136,11 @@ class Network:
 
 				#Backprop the error after the batch has been run:
 				self.Backprop(batch_output_deltas, learningrate)
+
+	def saveWeights(file_name="Plant_Weights"):
+		"""Saves the network's weights to a pkl file."""
+		#Save the things
+
+	def loadWeights(file_name="Plant_Weights"):
+		"""Saves the network's weights to a pkl file."""
+		#Load the things

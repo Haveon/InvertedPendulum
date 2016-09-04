@@ -71,7 +71,7 @@ def generateOutputs(inputs, dt=0.001, f=systemDE):
     return outputs
 
 if __name__ == '__main__':
-    inputs = generateInputs(1e6)
+    inputs = generateInputs(1e3)
     outputs= generateOutputs(inputs)
 
     meanTheta = meanUniformDistribution(0, 2*np.pi)
