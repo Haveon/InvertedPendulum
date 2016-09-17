@@ -70,6 +70,20 @@ def generateOutputs(inputs, dt=0.001, f=systemDE):
     outputs    = verletStep(f, theta_last, theta_now, control, None, dt)%(2*np.pi)
     return outputs
 
+def classificationError(neuralNet, normedInputs, normedOutputs):
+    """Calculates the classification error of the NN given a set of inputs and
+    expected outputs."""
+    number_of_samples = len(normedOutputs)
+    tmp_error = 0.
+
+    for i in xrange(number_of_samples):
+        classification = neuralNet.Classify(normedInputs[i])
+        print classification, normedOutputs[i]
+        tmp_error += np.abs((classification - normedOutputs[i])/normedOutputs[i])
+
+    error = tmp_error / number_of_samples
+    return error[0]
+
 if __name__ == '__main__':
     inputs = generateInputs(1e3)
     outputs= generateOutputs(inputs)

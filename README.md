@@ -19,3 +19,4 @@ using verlet steps.
 
 ## TODO
 * regularization
+* change the word "labels" to "outputs" in the Network class' code?
