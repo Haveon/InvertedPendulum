@@ -78,7 +78,6 @@ def classificationError(neuralNet, normedInputs, normedOutputs):
 
     for i in xrange(number_of_samples):
         classification = neuralNet.Classify(normedInputs[i])
-        print classification, normedOutputs[i]
         tmp_error += np.abs((classification - normedOutputs[i])/normedOutputs[i])
 
     error = tmp_error / number_of_samples

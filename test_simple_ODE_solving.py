@@ -8,8 +8,8 @@ from trainSystem import *
 
 DEnet = Network(3, 10, 1)
 
-inputs = generateInputs(1e3, dt=0.1)
-outputs= generateOutputs(inputs, dt=0.1)
+inputs = generateInputs(1e3)
+outputs= generateOutputs(inputs)
 
 meanTheta = meanUniformDistribution(0, 2*np.pi)
 meanControl= meanUniformDistribution(-1, 1)
@@ -33,8 +33,8 @@ post_training_error_training_data = classificationError(DEnet, normedInputs, nor
 #-------------------------------------------------------------------------------
 #Set up evaluation data and check the performance of the trained NN
 
-inputs = generateInputs(1e3, dt=0.1)
-outputs= generateOutputs(inputs, dt=0.1)
+inputs = generateInputs(1e3)
+outputs= generateOutputs(inputs)
 
 meanTheta = meanUniformDistribution(0, 2*np.pi)
 meanControl= meanUniformDistribution(-1, 1)
