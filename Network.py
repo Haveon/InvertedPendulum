@@ -41,44 +41,39 @@ def d_out_act(z): return np.ones(z.shape) #z*(1.0 - z)
 
 #--------------------------------------------------------------------------------------------------
 class Network:
-    def __init__(self, N_inputs=2, N_hidden=10, N_outputs=1):
+    def __init__(self, layers=[2,10,10,1], N_outputs=1):
         #Initialize the neural network. Note: "N" stands for "Number of _".
         self.N_in = N_inputs + 1 #Includes a bias weight vector.
-        self.N_hid_1 = N_hidden
-        self.N_hid_2 = N_hidden
-        self.N_out = N_outputs
+        self.layers = layers
 
-        #Initialize the weights with random values.
-        self.weightsIn = np.random.rand(self.N_in, self.N_hid_1)
-        self.weightsMiddle = np.random.rand(self.N_hid_1, self.N_hid_2)
-        self.weightsOut = np.random.rand(self.N_hid_2, self.N_out)
+        self.layers[0]+=1
+        self.weights = []
+        self.activations = [np.ones(node) for node in self.layers] #TODO why ones?!?
 
-        #"acts" = "activations", "in" = "inputs", "hid" = "hidden", "out" = "outputs"
-        self.acts_in = np.zeros(self.N_in) + 1
-        self.acts_hid_1 = np.zeros(self.N_hid_1) + 1
-        self.acts_hid_2 = np.zeros(self.N_hid_2) + 1
-        self.acts_out = np.zeros(self.N_out) + 1
+        for i, _ in enumerate(self.layers[:-1]):
+            weightMatrix = np.random.rand(self.layers[i], self.layers[i+1])
+            weights.append(weightMatrix)
 
         #Keep the deltas that were back-propagated to the input of the network
-        self.input_deltas = np.zeros(self.N_in)
-        self.output_deltas = np.zeros(self.N_in)
+        self.input_deltas = np.zeros(self.layers[0])
+        self.output_deltas = np.zeros(self.layers[-1]) #TODO check that this shouldn't actually be np.zeros(self.layers[0])
 
     def Classify(self, inputs):
         #Given an input, what does the network output?
 
         #Load inputs into the input activations, being careful to keep the bias input node's activation at zero.
-        for i in np.arange(len(inputs)):
-            self.acts_in[i] = inputs[i]
+        self.activations[0][:-1] = inputs
 
         #Calculate the hidden node activations and then the output activations using numpy matrix multiplication:
-        self.acts_hid_1 = hid_act(np.dot(np.transpose(self.weightsIn), self.acts_in))
-        self.acts_hid_2 = hid_act(np.dot(np.transpose(self.weightsMiddle), self.acts_hid_1))
-        self.acts_out = out_act(np.dot(np.transpose(self.weightsOut), self.acts_hid_2))
+        for i, _ in enumerate(self.weights):
+            self.activations[i+1] = hid_act(np.dot(np.transpose(self.weights[i]), self.activations[i]))
 
-        return self.acts_out #Output of network
+        return self.activations[-1] #Output of network
 
     def Backprop(self, output_deltas, learningrate):
         #Use backpropagation to update the weight values.
+
+        deltas = [output_deltas] + []
 
         #Calculate the deltas:
         hidden_deltas_2 = d_hid_act(self.acts_hid_2) * np.dot(self.weightsOut, output_deltas)
