@@ -41,9 +41,8 @@ def d_out_act(z): return np.ones(z.shape) #z*(1.0 - z)
 
 #--------------------------------------------------------------------------------------------------
 class Network:
-    def __init__(self, layers=[2,10,10,1], N_outputs=1):
+    def __init__(self, layers=[2,10,10,1]):
         #Initialize the neural network. Note: "N" stands for "Number of _".
-        self.N_in = N_inputs + 1 #Includes a bias weight vector.
         self.layers = layers
 
         self.layers[0]+=1
@@ -52,7 +51,7 @@ class Network:
 
         for i, _ in enumerate(self.layers[:-1]):
             weightMatrix = np.random.rand(self.layers[i], self.layers[i+1])
-            weights.append(weightMatrix)
+            self.weights.append(weightMatrix)
 
         #Keep the deltas that were back-propagated to the input of the network
         self.input_deltas = np.zeros(self.layers[0])
@@ -73,31 +72,24 @@ class Network:
     def Backprop(self, output_deltas, learningrate):
         #Use backpropagation to update the weight values.
 
-        deltas = [output_deltas] + []
-
-        #Calculate the deltas:
-        hidden_deltas_2 = d_hid_act(self.acts_hid_2) * np.dot(self.weightsOut, output_deltas)
-        hidden_deltas_1 = d_hid_act(self.acts_hid_1) * np.dot(self.weightsMiddle, hidden_deltas_2)
+        # Calculate the deltas
+        deltas = [output_deltas]
+        for i in range(len(self.activations)-2):                                # Only want to iterate over number of hidden layers
+            hidden_delta = d_hid_act(self.activations[-2-i]) * np.dot(self.weights[-i-1], deltas[i])    # Need to go backwards over the activations, skipping the out activation layer
+            deltas.append(hidden_delta)
 
         #Store output and input deltas for use if desired:
         self.output_deltas = output_deltas
-        self.input_deltas = np.dot(self.weightsIn, hidden_deltas_1)
+        self.input_deltas = np.dot(self.weights[0], deltas[-1])
 
-        #Update the output weights:
-        shift = np.outer(self.acts_hid_2, output_deltas)
-        self.weightsOut += learningrate * shift
-
-        #Update the middle weights:
-        shift = np.outer(self.acts_hid_1, hidden_deltas_2)
-        self.weightsMiddle += learningrate * shift
-
-        #Update the input weights:
-        shift = np.outer(self.acts_in, hidden_deltas_1)
-        self.weightsIn += learningrate * shift
+        # Update weights
+        for i in range(len(deltas)):
+            shift = np.outer(self.activations[-2-i], deltas[i])
+            self.weights[-1-i] += learningrate * shift
 
     def getOutputDeltas(self, expected_output_labels):
         """Calculates the output deltas to be used in the backpropagation function."""
-        output_deltas = (expected_output_labels - self.acts_out) * d_out_act(self.acts_out)
+        output_deltas = (expected_output_labels - self.activations[-1]) * d_out_act(self.activations[-1])
         return output_deltas
 
     def Learn(self, input_vectors, labels, iterations, learningrate=0.01):
