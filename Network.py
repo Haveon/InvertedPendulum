@@ -1,10 +1,3 @@
-#--------------------------------------------------------------------------------------------------
-#Computational Neuroscience Assignment: Regression, Classification, and Neural Networks
-#Question 3: Feedforward network trained using gradient descent and backpropagation.
-#BIOL 487 / SYDE 552
-#Andrew Reeves - 20459205
-#--------------------------------------------------------------------------------------------------
-
 import numpy as np
 import pickle
 
@@ -43,29 +36,33 @@ def d_out_act(z): return np.ones(z.shape) #z*(1.0 - z)
 class Network:
     def __init__(self, layers=[2,10,10,1]):
         #Initialize the neural network. Note: "N" stands for "Number of _".
-        self.layers = layers
 
-        self.layers[0]+=1
+        # self.layers[0]+=1
         self.weights = []
-        self.activations = [np.ones(node) for node in self.layers] #TODO why ones?!?
+        self.biases  = []
+        self.activations = [np.ones(node) for node in layers] #TODO why ones?!?
 
-        for i, _ in enumerate(self.layers[:-1]):
-            weightMatrix = np.random.rand(self.layers[i], self.layers[i+1])
+        for i, _ in enumerate(layers[:-1]):
+            weightMatrix = np.random.rand(layers[i+1], layers[i]) - 0.5
             self.weights.append(weightMatrix)
+            self.biases.append(np.random.rand(layers[i+1]) - 0.5 )
 
         #Keep the deltas that were back-propagated to the input of the network
-        self.input_deltas = np.zeros(self.layers[0])
-        self.output_deltas = np.zeros(self.layers[-1]) #TODO check that this shouldn't actually be np.zeros(self.layers[0])
+        self.input_deltas = np.zeros(layers[0])
+        self.output_deltas = np.zeros(layers[-1]) #TODO check that this shouldn't actually be np.zeros(self.layers[0])
 
     def Classify(self, inputs):
         #Given an input, what does the network output?
 
         #Load inputs into the input activations, being careful to keep the bias input node's activation at zero.
-        self.activations[0][:-1] = inputs
+        self.activations[0] = inputs
+        self.zs = []
 
         #Calculate the hidden node activations and then the output activations using numpy matrix multiplication:
         for i, _ in enumerate(self.weights):
-            self.activations[i+1] = hid_act(np.dot(np.transpose(self.weights[i]), self.activations[i]))
+            z = np.dot( self.weights[i], self.activations[i]) + self.biases[i]
+            self.activations[i+1] = hid_act( z )
+            self.zs.append(z)
 
         return self.activations[-1] #Output of network
 
@@ -75,21 +72,22 @@ class Network:
         # Calculate the deltas
         deltas = [output_deltas]
         for i in range(len(self.activations)-2):                                # Only want to iterate over number of hidden layers
-            hidden_delta = d_hid_act(self.activations[-2-i]) * np.dot(self.weights[-i-1], deltas[i])    # Need to go backwards over the activations, skipping the out activation layer
+            hidden_delta = d_hid_act(self.zs[-2-i]) * np.dot(self.weights[-i-1].T, deltas[i])    # Need to go backwards over the activations, skipping the out activation layer
             deltas.append(hidden_delta)
 
         #Store output and input deltas for use if desired:
         self.output_deltas = output_deltas
-        self.input_deltas = np.dot(self.weights[0], deltas[-1])
+        self.input_deltas = np.dot(self.weights[0].T, deltas[-1])
 
         # Update weights
         for i in range(len(deltas)):
-            shift = np.outer(self.activations[-2-i], deltas[i])
+            shift = np.outer(deltas[i], self.activations[-2-i] )
             self.weights[-1-i] += learningrate * shift
+            self.biases[-1-i] += learningrate * deltas[i]
 
     def getOutputDeltas(self, expected_output_labels):
         """Calculates the output deltas to be used in the backpropagation function."""
-        output_deltas = (expected_output_labels - self.activations[-1]) * d_out_act(self.activations[-1])
+        output_deltas = (expected_output_labels - self.activations[-1]) * d_out_act(self.zs[-1])
         return output_deltas
 
     def Learn(self, input_vectors, labels, iterations, learningrate=0.01):
