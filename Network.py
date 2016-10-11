@@ -79,7 +79,10 @@ class Network:
         # Calculate the deltas
         deltas = [output_deltas]
         for i in range(len(self.activations)-2):                                # Only want to iterate over number of hidden layers
-            hidden_delta = d_hid_act(self.activations[-2-i]) * np.dot(self.weights[-i-1], deltas[i])    # Need to go backwards over the activations, skipping the out activation layer
+            if i < range(len(self.activations)-2):
+                hidden_delta = d_hid_act(self.activations[-2-i]) * np.dot(self.weights[-i-1], deltas[i])    # Need to go backwards over the activations, skipping the out activation layer
+            else:
+                hidden_delta = d_out_act(self.activations[-2-i]) * np.dot(self.weights[-i-1], deltas[i])
             deltas.append(hidden_delta)
 
         #Store output and input deltas for use if desired:
