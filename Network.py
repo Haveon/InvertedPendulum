@@ -43,9 +43,9 @@ def d_out_act(z): return np.ones(z.shape) #z*(1.0 - z)
 class Network:
     def __init__(self, layers=[2,10,10,1]):
         #Initialize the neural network. Note: "N" stands for "Number of _".
-        self.layers = layers
 
-        self.layers[0]+=1
+        self.layers = [layer+1 for layer in layers] #Add bias nodes
+        self.layers[-1] -= 1 #But no bias node for the output layer of course
         self.weights = []
         self.activations = [np.ones(node) for node in self.layers] #TODO why ones?!?
 
@@ -55,7 +55,7 @@ class Network:
 
         #Keep the deltas that were back-propagated to the input of the network
         self.input_deltas = np.zeros(self.layers[0])
-        self.output_deltas = np.zeros(self.layers[-1]) #TODO check that this shouldn't actually be np.zeros(self.layers[0])
+        self.output_deltas = np.zeros(self.layers[-1])
 
     def Classify(self, inputs):
         #Given an input, what does the network output?
@@ -65,7 +65,11 @@ class Network:
 
         #Calculate the hidden node activations and then the output activations using numpy matrix multiplication:
         for i, _ in enumerate(self.weights):
-            self.activations[i+1] = hid_act(np.dot(np.transpose(self.weights[i]), self.activations[i]))
+            if i != (len(self.weights)-1): #If not the output layer:
+                self.activations[i+1] = hid_act(np.dot(np.transpose(self.weights[i]), self.activations[i]))
+            else:
+                #Output layer
+                self.activations[i+1] = out_act(np.dot(np.transpose(self.weights[i]), self.activations[i]))
 
         return self.activations[-1] #Output of network
 
@@ -98,7 +102,7 @@ class Network:
 
         for i in np.arange(iterations):
             # i = iteration
-            #print i 
+            print i 
             for pos in np.arange(len(labels)): #pos is the index of the training data point being classified.
                 self.Classify(input_vectors[pos])
                 output_deltas = self.getOutputDeltas(labels[pos])
