@@ -105,7 +105,7 @@ class Network:
 
         for i in np.arange(iterations):
             # i = iteration
-            print i 
+            #print i 
             for pos in np.arange(len(labels)): #pos is the index of the training data point being classified.
                 self.Classify(input_vectors[pos])
                 output_deltas = self.getOutputDeltas(labels[pos])

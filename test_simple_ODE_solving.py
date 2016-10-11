@@ -6,7 +6,7 @@ from trainSystem import *
 #-------------------------------------------------------------------------------
 #Set up training data
 
-DEnet = Network(3, 10, 1)
+DEnet = Network([3, 15, 15, 1])
 
 inputs = generateInputs(1e5)
 outputs= generateOutputs(inputs)
@@ -53,8 +53,10 @@ learningrates = [1E-2, 1E-2, 5E-3, 1E-3, 5E-4, 1E-4, 5E-5, 5E-5, 1E-5, 1E-5, 1E-
 
 for i in xrange(iterations):
     learningrate_tmp = learningrates[i]
-    DEnet.batchLearn(normedInputs, normedOutputs, 1, learningrate=learningrate_tmp,batch_size=1)
-    print "*Iteration ", i, " classification errors:"
+    #DEnet.batchLearn(normedInputs, normedOutputs, 1, learningrate=learningrate_tmp,batch_size=1)
+    DEnet.Learn(normedInputs, normedOutputs, 1, learningrate=learningrate_tmp)
+    print "*Iteration ", i
+    print "Classification errors:"
     training_data_errors.append(classificationError(DEnet, normedInputs, normedOutputs)*100)
     print "-Training data:", training_data_errors[i], '%'
     evaluation_data_errors.append(classificationError(DEnet, evaluation_normedInputs, evaluation_normedOutputs)*100)
